@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-const OO_API_TOKEN = "<oneops token>"
+const OO_API_TOKEN = "<token>"
 
 func RunAnsible(logdir *string, logfile *os.File, request *shyunutils.RequestMessage, subresponsestream chan string) {
 	log.SetOutput(logfile)
@@ -32,7 +32,7 @@ func RunAnsible(logdir *string, logfile *os.File, request *shyunutils.RequestMes
 	//we need to modify the OO_PLATFORM as the oneops jar expects -l arguement as platform-<actual platformname>-compute.
 	L_OO_PLATFORM := "platform-" + OO_PLATFORM + "-compute"
 	//fmt.Println(OO_API_TOKEN, OO_ORG, OO_ENV, OO_ASSEMBLY)
-	cmd := exec.CommandContext(ctx, "ansible-playbook", "-l", L_OO_PLATFORM, "--user=<user_to_run_ansible>", "-i", jar_path, playbook_to_run, "--extra-vars", "OO_ORG="+OO_ORG+" OO_ASSEMBLY="+OO_ASSEMBLY+" OO_PLATFORM="+OO_PLATFORM+" OO_ENV="+OO_ENV+"")
+	cmd := exec.CommandContext(ctx, "ansible-playbook", "-l", L_OO_PLATFORM, "--user=user", "-i", jar_path, playbook_to_run, "--extra-vars", "OO_ORG="+OO_ORG+" OO_ASSEMBLY="+OO_ASSEMBLY+" OO_PLATFORM="+OO_PLATFORM+" OO_ENV="+OO_ENV+"")
 	env := os.Environ()
 
 	env = append(env, fmt.Sprintf("OO_API_TOKEN=%s", OO_API_TOKEN), fmt.Sprintf("OO_ORG=%s", OO_ORG), fmt.Sprintf("OO_ASSEMBLY=%s", OO_ASSEMBLY), fmt.Sprintf("OO_ENV=%s", OO_ENV), fmt.Sprintf("OO_ENDPOINT=%s", "https://oneops.prod.walmart.com/"), fmt.Sprintf("ANSIBLE_HOST_KEY_CHECKING=%s", "False"))
@@ -90,8 +90,7 @@ func HandleTCPConnection(conn net.Conn, logfile *os.File, log_file_path *string)
 	//decode the data from conn. under the hoods, unmarshall is what happens with decode.
 
 	err := requestjson.Decode(requestmessage)
-	fmt.Println(requestmessage)
-	fmt.Printf("%T", requestmessage)
+
 	if err != nil {
 		log.Print("ERROR: Unable to parse the request")
 		runtime.Goexit()

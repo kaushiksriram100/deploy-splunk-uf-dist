@@ -7,21 +7,22 @@ import (
 	"fmt"
 	"github.com/kaushiksriram100/deploy-splunk-uf-dist/shyunutils"
 	"log"
+	"math/rand"
 	"net"
 	"os"
 	"strings"
+	"time"
 )
+
+func random(min, max int) int {
+
+	return rand.Intn(max-min) + min
+
+}
 
 func DialTCP(requests []shyunutils.RequestMessage, slavenodes *string, ansible_playbook_path *string, ansible_playbook_action *string, oneops_jar_path *string, targettype *string, logfile *os.File) {
 	log.SetOutput(logfile)
 	slavenode := strings.Split((*slavenodes), ",")
-
-	tcpAddr, err := net.ResolveTCPAddr("tcp", slavenode[0])
-
-	if err != nil {
-		fmt.Println("ERROR: slavenode not reachable")
-		return
-	}
 
 	for _, v := range requests {
 
@@ -29,24 +30,45 @@ func DialTCP(requests []shyunutils.RequestMessage, slavenodes *string, ansible_p
 		v.PlaybookPath = (*ansible_playbook_path)
 		v.InvJar = (*oneops_jar_path)
 
+		//pick a random number
+		trynode := 0
+		if len(slavenode) > 1 {
+			rand.Seed(time.Now().UTC().UnixNano())
+			trynode = rand.Intn(len(slavenode))
+		}
+
+		fmt.Println(trynode)
+		fmt.Println(len(slavenode))
+		//Try to resolve, if fails, move to another node.
+		tcpAddr, err := net.ResolveTCPAddr("tcp", slavenode[trynode])
+
+		if err != nil {
+			var tmp []shyunutils.RequestMessage
+			tmp = append(tmp, v)
+			log.Print("WARNING: Slave node not reachable. Will attempt some other host - " + slavenode[trynode])
+			DialTCP(tmp, slavenodes, ansible_playbook_path, ansible_playbook_action, oneops_jar_path, targettype, logfile)
+			continue
+		}
 		conn, err := net.DialTCP("tcp", nil, tcpAddr)
 
 		if err != nil {
-			log.Print("ERROR:Not able to connect to remote host", tcpAddr)
-			return
+			var tmp1 []shyunutils.RequestMessage
+			tmp1 = append(tmp1, v)
+			log.Print("ERROR:Not able to connect to remote host, will try with some other host - ", tcpAddr)
+			DialTCP(tmp1, slavenodes, ansible_playbook_path, ansible_playbook_action, oneops_jar_path, targettype, logfile)
+			continue
 		}
 
 		sendjson := json.NewEncoder(conn)
 
 		err = sendjson.Encode(v)
-		fmt.Println(v)
-		fmt.Printf("%T", v)
 
 		if err != nil {
-			log.Print("ERROR: ERROR sending request")
+			log.Print("ERROR: ERROR sending request", slavenode[trynode])
+
 		}
 
-		log.Print("INFO: Sent request to slave")
+		log.Print("INFO: Sent request to slave", slavenode[trynode])
 		conn.Close()
 
 	}
@@ -97,6 +119,9 @@ func main() {
 	//Now requestmessages has everything in each slice.
 
 	//send json data.
+
+	// set a seed for picking a random number
+	rand.Seed(time.Now().UnixNano())
 
 	//break the slice requestmessage and send it
 
