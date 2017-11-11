@@ -17,11 +17,8 @@ import (
 	"time"
 )
 
-func random(min, max int) int {
-
-	return rand.Intn(max-min) + min
-
-}
+const maxretries int = 3 //max number of times to retry with different slaves. helps in calling the recursion function dialTCP
+var count int = 0        //count the number of attempts made.
 
 func DialTCP(requests []shyunutils.RequestMessage, slavenodes *string, ansible_playbook_path *string, ansible_playbook_action *string, oneops_jar_path *string, targettype *string, logfile *os.File) {
 	log.SetOutput(logfile)
@@ -48,20 +45,33 @@ func DialTCP(requests []shyunutils.RequestMessage, slavenodes *string, ansible_p
 		tcpAddr, err := net.ResolveTCPAddr("tcp", slavenode[trynode])
 
 		if err != nil {
-			var tmp []shyunutils.RequestMessage
-			tmp = append(tmp, v)
-			log.Print("WARNING: Slave node not reachable. Will attempt some other host - " + slavenode[trynode])
-			DialTCP(tmp, slavenodes, ansible_playbook_path, ansible_playbook_action, oneops_jar_path, targettype, logfile)
-			continue
+			if count < maxretries {
+				var tmp []shyunutils.RequestMessage
+				tmp = append(tmp, v)
+				log.Print("WARNING: Slave node not reachable. Will attempt some other host - " + slavenode[trynode])
+				count = count + 1
+				DialTCP(tmp, slavenodes, ansible_playbook_path, ansible_playbook_action, oneops_jar_path, targettype, logfile)
+				continue
+			} else {
+				continue
+			}
+
 		}
 		conn, err := net.DialTCP("tcp", nil, tcpAddr)
 
 		if err != nil {
-			var tmp1 []shyunutils.RequestMessage
-			tmp1 = append(tmp1, v)
-			log.Print("ERROR:Not able to connect to remote host, will try with some other host - ", tcpAddr)
-			DialTCP(tmp1, slavenodes, ansible_playbook_path, ansible_playbook_action, oneops_jar_path, targettype, logfile)
-			continue
+			if count < maxretries {
+				var tmp1 []shyunutils.RequestMessage
+				tmp1 = append(tmp1, v)
+				log.Print("ERROR:Not able to connect to remote host, will try with some other host - ", tcpAddr)
+				count = count + 1
+				DialTCP(tmp1, slavenodes, ansible_playbook_path, ansible_playbook_action, oneops_jar_path, targettype, logfile)
+				continue
+
+			} else {
+				continue
+			}
+
 		}
 
 		sendjson := json.NewEncoder(conn)
