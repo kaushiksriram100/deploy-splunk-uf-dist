@@ -1,4 +1,7 @@
-//Master Node that issues requests to slave (master node is more of a client here. Slave nodes are server nodes)
+/*
+Author: Sriram Kaushik
+Master Node that issues requests to slave (master node is more of a client here. Slave nodes are server nodes)
+*/
 package main
 
 import (
@@ -22,23 +25,25 @@ func random(min, max int) int {
 
 func DialTCP(requests []shyunutils.RequestMessage, slavenodes *string, ansible_playbook_path *string, ansible_playbook_action *string, oneops_jar_path *string, targettype *string, logfile *os.File) {
 	log.SetOutput(logfile)
+
+	//make the slave nodes as a array.
 	slavenode := strings.Split((*slavenodes), ",")
 
+	//for each request, we will pick a random remote server and use dialTCP to send the request.
+	//if there is some connection issue, we will recursively call this DialTCP to try with some other host.
 	for _, v := range requests {
 
 		v.PlaybookAction = (*ansible_playbook_action)
 		v.PlaybookPath = (*ansible_playbook_path)
 		v.InvJar = (*oneops_jar_path)
 
-		//pick a random number
+		//pick a random number to send to a random remote server
 		trynode := 0
 		if len(slavenode) > 1 {
 			rand.Seed(time.Now().UTC().UnixNano())
 			trynode = rand.Intn(len(slavenode))
 		}
 
-		fmt.Println(trynode)
-		fmt.Println(len(slavenode))
 		//Try to resolve, if fails, move to another node.
 		tcpAddr, err := net.ResolveTCPAddr("tcp", slavenode[trynode])
 

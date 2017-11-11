@@ -1,3 +1,10 @@
+/*
+Author: Sriram Kaushik
+Purpose: Slave worker will listen on a chosen port for any requests from the master.
+Once a request comes, it will handle it (and run the ansible playbook to deploy splunk-uf for that request env)
+slaves can run on multiple VMs or ports.
+*/
+
 package main
 
 import (
@@ -14,7 +21,7 @@ import (
 	"time"
 )
 
-const OO_API_TOKEN = "<token>"
+const OO_API_TOKEN = "<sorry>"
 
 func RunAnsible(logdir *string, logfile *os.File, request *shyunutils.RequestMessage, subresponsestream chan string) {
 	log.SetOutput(logfile)
