@@ -39,7 +39,7 @@ func RunAnsible(logdir *string, logfile *os.File, request *shyunutils.RequestMes
 	//we need to modify the OO_PLATFORM as the oneops jar expects -l arguement as platform-<actual platformname>-compute.
 	L_OO_PLATFORM := "platform-" + OO_PLATFORM + "-compute"
 	//fmt.Println(OO_API_TOKEN, OO_ORG, OO_ENV, OO_ASSEMBLY)
-	cmd := exec.CommandContext(ctx, "ansible-playbook", "-l", L_OO_PLATFORM, "--user=user", "-i", jar_path, playbook_to_run, "--extra-vars", "OO_ORG="+OO_ORG+" OO_ASSEMBLY="+OO_ASSEMBLY+" OO_PLATFORM="+OO_PLATFORM+" OO_ENV="+OO_ENV+"")
+	cmd := exec.CommandContext(ctx, "ansible-playbook", "-l", L_OO_PLATFORM, "--user=xzy", "-i", jar_path, playbook_to_run, "--extra-vars", "OO_ORG="+OO_ORG+" OO_ASSEMBLY="+OO_ASSEMBLY+" OO_PLATFORM="+OO_PLATFORM+" OO_ENV="+OO_ENV+"")
 	env := os.Environ()
 
 	env = append(env, fmt.Sprintf("OO_API_TOKEN=%s", OO_API_TOKEN), fmt.Sprintf("OO_ORG=%s", OO_ORG), fmt.Sprintf("OO_ASSEMBLY=%s", OO_ASSEMBLY), fmt.Sprintf("OO_ENV=%s", OO_ENV), fmt.Sprintf("OO_ENDPOINT=%s", "https://oneops.prod.walmart.com/"), fmt.Sprintf("ANSIBLE_HOST_KEY_CHECKING=%s", "False"))
@@ -81,6 +81,8 @@ func HandleTCPConnection(conn net.Conn, logfile *os.File, log_file_path *string)
 	log.SetOutput(logfile)
 
 	log.Print("INFO:Handling request...")
+
+	//FIX->Instead of Defer, you can close it after decoding(before RunAnsible), so that connection is not blocked due to ansible runs
 	defer func() {
 		log.Print("INFO:Closing Connection...")
 		conn.Close()
@@ -105,6 +107,8 @@ func HandleTCPConnection(conn net.Conn, logfile *os.File, log_file_path *string)
 
 	//now that we have all data in the []byte, lets send this to a function from where we will trigger anisble jobs
 	subresponsestream := make(chan string)
+
+	//Go routine inside goroutine.. I am improving skills here..
 	go RunAnsible(log_file_path, logfile, requestmessage, subresponsestream)
 
 	log.Print(<-subresponsestream)

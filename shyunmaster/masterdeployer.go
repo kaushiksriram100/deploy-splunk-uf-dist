@@ -17,12 +17,12 @@ import (
 	"time"
 )
 
-const maxretries int = 3 //max number of times to retry with different slaves. helps in calling the recursion function dialTCP
+const maxretries int = 5 //max number of times to retry with different slaves. helps in calling the recursion function dialTCP
 var count int = 0        //count the number of attempts made.
 
 func DialTCP(requests []shyunutils.RequestMessage, slavenodes *string, ansible_playbook_path *string, ansible_playbook_action *string, oneops_jar_path *string, targettype *string, logfile *os.File) {
 	log.SetOutput(logfile)
-
+	//fmt.Println("-------------", requests)
 	//make the slave nodes as a array.
 	slavenode := strings.Split((*slavenodes), ",")
 
@@ -41,8 +41,12 @@ func DialTCP(requests []shyunutils.RequestMessage, slavenodes *string, ansible_p
 			trynode = rand.Intn(len(slavenode))
 		}
 
+	//	fmt.Println("trying to resolve IP")
+
 		//Try to resolve, if fails, move to another node.
 		tcpAddr, err := net.ResolveTCPAddr("tcp", slavenode[trynode])
+
+		//fmt.Println("resolve Error?", err)
 
 		if err != nil {
 			if count < maxretries {
@@ -57,13 +61,16 @@ func DialTCP(requests []shyunutils.RequestMessage, slavenodes *string, ansible_p
 			}
 
 		}
+
+	//	fmt.Println("dialing tcp")
 		conn, err := net.DialTCP("tcp", nil, tcpAddr)
+	//	fmt.Println("dial error", err)
 
 		if err != nil {
 			if count < maxretries {
 				var tmp1 []shyunutils.RequestMessage
 				tmp1 = append(tmp1, v)
-				log.Print("ERROR:Not able to connect to remote host, will try with some other host - ", tcpAddr)
+				log.Print("ERROR:Not able to connect to remote host, will try with some other host - ", tcpAddr, tmp1)
 				count = count + 1
 				DialTCP(tmp1, slavenodes, ansible_playbook_path, ansible_playbook_action, oneops_jar_path, targettype, logfile)
 				continue
