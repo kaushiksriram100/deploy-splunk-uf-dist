@@ -1,4 +1,5 @@
 ***OBSOLETE REPO***
+***Please use https://github.com/kaushiksriram100/ansible-deployer-dist*** I will decomm this repo shortly.
 
 shyun master/slave setup
 
@@ -9,4 +10,4 @@ This wrapper uses enables start a master and several slaves. Master will open a 
 Slaves will run on them separately. .
 
 
-***THIS REPO IS SAME as https://github.com/kaushiksriram100/ansible-deployer-dist*** Please use this one. I will decomm this repo shortly.
+
