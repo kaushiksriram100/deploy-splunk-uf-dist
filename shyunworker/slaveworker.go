@@ -12,13 +12,14 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/kaushiksriram100/deploy-splunk-uf-dist/shyunutils"
 	"log"
 	"net"
 	"os"
 	"os/exec"
 	"runtime"
 	"time"
+
+	"github.com/kaushiksriram100/ansible-deployer-dist/shyunutils"
 )
 
 const OO_API_TOKEN = "<sorry>"
@@ -39,7 +40,7 @@ func RunAnsible(logdir *string, logfile *os.File, request *shyunutils.RequestMes
 	//we need to modify the OO_PLATFORM as the oneops jar expects -l arguement as platform-<actual platformname>-compute.
 	L_OO_PLATFORM := "platform-" + OO_PLATFORM + "-compute"
 	//fmt.Println(OO_API_TOKEN, OO_ORG, OO_ENV, OO_ASSEMBLY)
-	cmd := exec.CommandContext(ctx, "ansible-playbook", "-l", L_OO_PLATFORM, "--user=xzy", "-i", jar_path, playbook_to_run, "--extra-vars", "OO_ORG="+OO_ORG+" OO_ASSEMBLY="+OO_ASSEMBLY+" OO_PLATFORM="+OO_PLATFORM+" OO_ENV="+OO_ENV+"")
+	cmd := exec.CommandContext(ctx, "ansible-playbook", "-l", L_OO_PLATFORM, "--user=app", "-i", jar_path, playbook_to_run, "--extra-vars", "OO_ORG="+OO_ORG+" OO_ASSEMBLY="+OO_ASSEMBLY+" OO_PLATFORM="+OO_PLATFORM+" OO_ENV="+OO_ENV+"")
 	env := os.Environ()
 
 	env = append(env, fmt.Sprintf("OO_API_TOKEN=%s", OO_API_TOKEN), fmt.Sprintf("OO_ORG=%s", OO_ORG), fmt.Sprintf("OO_ASSEMBLY=%s", OO_ASSEMBLY), fmt.Sprintf("OO_ENV=%s", OO_ENV), fmt.Sprintf("OO_ENDPOINT=%s", "https://oneops.prod.walmart.com/"), fmt.Sprintf("ANSIBLE_HOST_KEY_CHECKING=%s", "False"))

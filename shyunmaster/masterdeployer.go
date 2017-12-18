@@ -8,13 +8,14 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/kaushiksriram100/deploy-splunk-uf-dist/shyunutils"
 	"log"
 	"math/rand"
 	"net"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/kaushiksriram100/ansible-deployer-dist/shyunutils"
 )
 
 const maxretries int = 5 //max number of times to retry with different slaves. helps in calling the recursion function dialTCP
@@ -41,7 +42,7 @@ func DialTCP(requests []shyunutils.RequestMessage, slavenodes *string, ansible_p
 			trynode = rand.Intn(len(slavenode))
 		}
 
-	//	fmt.Println("trying to resolve IP")
+		//	fmt.Println("trying to resolve IP")
 
 		//Try to resolve, if fails, move to another node.
 		tcpAddr, err := net.ResolveTCPAddr("tcp", slavenode[trynode])
@@ -62,9 +63,9 @@ func DialTCP(requests []shyunutils.RequestMessage, slavenodes *string, ansible_p
 
 		}
 
-	//	fmt.Println("dialing tcp")
+		//	fmt.Println("dialing tcp")
 		conn, err := net.DialTCP("tcp", nil, tcpAddr)
-	//	fmt.Println("dial error", err)
+		//	fmt.Println("dial error", err)
 
 		if err != nil {
 			if count < maxretries {
@@ -103,7 +104,7 @@ func main() {
 
 	slavenodes := flag.String("slaves", "localhost:3001", "all slave nodes, comma separated")
 	//Get logfile path and config file path from arguments.
-	var log_file_path = flag.String("logfile", "/var/tmp/deploy-splunk-uf/log/", "--logfile=logfile path. Default is /var/tmp/deploy-splunk-uf/log/")
+	var log_file_path = flag.String("logfile", "/var/tmp/ansible-deployer-dist/log/", "--logfile=logfile path. Default is /var/tmp/ansible-deployer-dist/log/")
 
 	//Get the ansible playbook file and oneops-inventory jar path.
 
